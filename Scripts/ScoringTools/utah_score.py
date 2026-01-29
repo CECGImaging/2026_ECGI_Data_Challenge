@@ -13,6 +13,9 @@ TURE_DATA_FILES="*-cs.mat"
 VERBOSE=True
 
 def log(message):
+	"""
+	TODO:Document
+	"""
 	if VERBOSE:
 		print(message)
 
@@ -50,6 +53,9 @@ def calculate_correlation(signal1: npt.NDArray[np.floating],
 	return corrVal
 
 def calc_spatial_correlation(sig1,sig2):
+	"""
+	TODO:Document
+	"""
 	log("\tCalculating Spatial Correlation")
 	correlations = np.empty(sig1.shape[1],dtype=np.float64)
 	for time_index in range(sig1.shape[1]):
@@ -59,6 +65,9 @@ def calc_spatial_correlation(sig1,sig2):
 	return final_corr, correlations
 
 def calc_temporal_correlation(sig1,sig2):
+	"""
+	TODO:Document
+	"""
 	log("\tCalculating Temporal Correlation")
 	correlations = np.empty(sig1.shape[0],dtype=np.float64)
 	for node_index in range(sig1.shape[0]):
@@ -68,20 +77,28 @@ def calc_temporal_correlation(sig1,sig2):
 	return final_corr, correlations
 
 def calc_RMSE(sig1,sig2):
+	"""
+	TODO:Document
+	"""
 	log("\tCalculating RMSE")
 	return np.sqrt(np.sum(np.pow(sig1-sig2,2))/sig1.size)
 
 def validate_inputs(true_data,given_data):
+	"""
+	TODO:Document
+	"""
 	log("Validating inputs")
+	#check for empty inputs
 	if len(true_data) == 0 or len(given_data) == 0:
 		raise UtahDataError("Missing data"
 							f"\n\tNum True Data: {len(true_data)}"
 							f"\n\tNum Test Data: {len(given_data)}")
+	#check for equal number of beats
 	if len(true_data) != len(given_data):
 		raise UtahDataError("Data lengths do not match"
 							f"\n\tExpected: {len(true_data)}"
 							f"\n\tGot     : {len(given_data)}")
-
+	#check all beats have the same dimensions
 	for sigIndex,(true_signal,given_signal) in enumerate(zip(true_data,given_data)):
 		if true_signal['potvals'].shape != given_signal['potvals'].shape:
 			raise UtahDataError(f"Signals at index {sigIndex} size did not match."
@@ -89,6 +106,9 @@ def validate_inputs(true_data,given_data):
 								f"\n\tGot     :{given_signal['potvals'].shape}")
 
 def load_truth():
+	"""
+	TODO:Document
+	"""
 	log("Loading true data")
 	true_data = []
 	pattern = f"{TRUE_DATA_DIR}{TURE_DATA_FILES}"
@@ -102,12 +122,21 @@ def load_truth():
 	return true_data
 	
 def normalize_RMSE(RMSES):
+	"""
+	TODO:Document
+	"""
+	log('\tNormalizing RMSE')
 	RMSES = np.mean(RMSES)
 	#TODO implement norm
-	return RMSES
+	maxValue = 1.0
+	RMSE_norm = 1.0-(RMSES / maxValue)
+	return RMSE_norm
 
 def combine_scores(all_scores):
-	log("\tCombining scores")
+	"""
+	TODO:Document
+	"""
+	log("Combining scores")
 	total_score = 0
 	for score in all_scores.keys():
 		value = all_scores[score]['value']
@@ -118,13 +147,22 @@ def combine_scores(all_scores):
 
 
 def run_score(given_answer):
+	"""
+	TODO:Document
+	"""
+
+	#Load the true data
 	true_data = load_truth()
+	#ensure given and true data look correct (structurally)
 	validate_inputs(true_data,given_answer)
+
+	#initilize score arrays
 	number_of_beats = len(true_data)
 	spatial_correlations = np.empty(number_of_beats,dtype=np.float64)
 	temporal_correlations = np.empty(number_of_beats,dtype=np.float64)
 	RMSEs = np.empty(number_of_beats,dtype=np.float64)
 
+	#For each signal, calculate the scores
 	for sigIndex,(true_signal,given_signal) in enumerate(zip(true_data,given_answer)):
 		log(f"Working on signal {sigIndex+1} of {number_of_beats}")
 		#Spatial Correlation
@@ -137,7 +175,7 @@ def run_score(given_answer):
 		RMSEs[sigIndex] = calc_RMSE(true_signal['potvals'],
 									given_signal['potvals'])
 
-
+	#Create the all_scores dictionary expected by the combining function
 	all_scores = {"SC":{"value":spatial_correlations,
 						"weight":1/3,
 						"norm":np.mean},
@@ -147,10 +185,15 @@ def run_score(given_answer):
 				  "RMSE":{"value":RMSEs,
 						"weight":1/3,
 						"norm":normalize_RMSE}}
+	#Combine all of the scores
 	final_score = combine_scores(all_scores)
 	return final_score, all_scores
 
 if __name__=="__main__":
+	"""
+	TODO:Document
+	"""
+	#Just run on the true data if called directly. Should give a perfect score
 	log("Running on true data")
 	data = load_truth()
 	final_score,all_scores = run_score(data)
