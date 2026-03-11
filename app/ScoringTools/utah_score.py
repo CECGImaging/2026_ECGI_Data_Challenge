@@ -7,9 +7,9 @@ class UtahDataError(Exception):
     """Raised when Utah Data Scoring fails."""
     pass
 
-
-TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
-TURE_DATA_FILES="*-cs.mat"
+from config import TRUE_DATA_DIR, TRUE_DATA_FILES
+#TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
+#TRUE_DATA_FILES="*-cs.mat"
 VERBOSE=True
 
 def log(message):
@@ -111,7 +111,7 @@ def load_truth():
 	"""
 	log("Loading true data")
 	true_data = []
-	pattern = f"{TRUE_DATA_DIR}{TURE_DATA_FILES}"
+	pattern = f"{TRUE_DATA_DIR}{TRUE_DATA_FILES}"
 	dataFiles = [os.path.abspath(name) for name in glob.glob(pattern)]
 	log(f"\tFound {len(dataFiles)} files")
 	for file in dataFiles:
