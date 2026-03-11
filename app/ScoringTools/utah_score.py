@@ -7,7 +7,7 @@ class UtahDataError(Exception):
     """Raised when Utah Data Scoring fails."""
     pass
 
-from config import TRUE_DATA_DIR, TRUE_DATA_FILES
+from .config import TRUE_DATA_DIR, TRUE_DATA_FILES
 #TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
 #TRUE_DATA_FILES="*-cs.mat"
 VERBOSE=True
@@ -84,26 +84,29 @@ def calc_RMSE(sig1,sig2):
 	return np.sqrt(np.sum(np.pow(sig1-sig2,2))/sig1.size)
 
 def validate_inputs(true_data,given_data):
-	"""
-	TODO:Document
-	"""
-	log("Validating inputs")
-	#check for empty inputs
-	if len(true_data) == 0 or len(given_data) == 0:
-		raise UtahDataError("Missing data"
-							f"\n\tNum True Data: {len(true_data)}"
-							f"\n\tNum Test Data: {len(given_data)}")
-	#check for equal number of beats
-	if len(true_data) != len(given_data):
-		raise UtahDataError("Data lengths do not match"
-							f"\n\tExpected: {len(true_data)}"
-							f"\n\tGot     : {len(given_data)}")
-	#check all beats have the same dimensions
-	for sigIndex,(true_signal,given_signal) in enumerate(zip(true_data,given_data)):
-		if true_signal['potvals'].shape != given_signal['potvals'].shape:
-			raise UtahDataError(f"Signals at index {sigIndex} size did not match."
-								f"\n\tExpected:{true_signal['potvals'].shape}"
-								f"\n\tGot     :{given_signal['potvals'].shape}")
+  """
+  TODO:Document
+  """
+  log("Validating inputs")
+  #check for empty inputs
+#  print(true_data.keys())
+#  print(true_data["potvals"])
+#  print(given_data["potvals"])
+  if len(true_data) == 0 or len(given_data) == 0:
+    raise UtahDataError("Missing data"
+              f"\n\tNum True Data: {len(true_data)}"
+              f"\n\tNum Test Data: {len(given_data)}")
+  #check for equal number of beats
+  if len(true_data) != len(given_data):
+    raise UtahDataError("Data lengths do not match"
+              f"\n\tExpected: {len(true_data)}"
+              f"\n\tGot     : {len(given_data)}")
+  #check all beats have the same dimensions
+  for sigIndex,(true_signal,given_signal) in enumerate(zip(true_data,given_data)):
+    if true_signal['potvals'].shape != given_signal['potvals'].shape:
+      raise UtahDataError(f"Signals at index {sigIndex} size did not match."
+                f"\n\tExpected:{true_signal['potvals'].shape}"
+                f"\n\tGot     :{given_signal['potvals'].shape}")
 
 def load_truth():
 	"""

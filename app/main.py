@@ -7,8 +7,6 @@ import uvicorn
 import scipy.io as scio
 import io
 
-from .config import TRUE_DATA_DIR, TRUE_DATA_FILES
-
 import app.ScoringTools.utah_score as us
 
 class Item(BaseModel):
@@ -23,11 +21,11 @@ async def create_item(item: Item):
 
 @app.post("/files/")
 async def create_file(file: Annotated[bytes, File()]):
-  data = load_ts_file(file)
+  data = load_cs_file(file)
   print(data.keys())
   return {"file_size": len(file)}
   
-def load_ts_file(f_contents):
+def load_cs_file(f_contents):
   """
   TODO:Document
   """
@@ -45,8 +43,10 @@ def load_ts_file(f_contents):
 @app.post("/uploadfile/")
 async def upload_file_content(file: UploadFile):
   contents = await file.read()  # Get file contents as bytes
-  data = load_ts_file(contents)
-  print(data.keys())
+  data = [load_cs_file(contents)]
+  print(data[0].keys())
+  final_score,all_scores = us.run_score(data)
+  print(f"Final score {final_score}")
   return {"filename": file.filename, "size": len(contents)}
     
 @app.get("/")
