@@ -81,7 +81,7 @@ def calc_RMSE(sig1,sig2):
 	TODO:Document
 	"""
 	log("\tCalculating RMSE")
-	return np.sqrt(np.sum(np.pow(sig1-sig2,2))/sig1.size)
+	return np.sqrt(np.sum(np.power(sig1-sig2,2))/sig1.size)
 
 def validate_inputs(true_data,given_data):
   """

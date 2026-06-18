@@ -1,0 +1,53 @@
+body {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  line-height: 1.4;
+}
+
+#userbar {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.logo {
+  height: 40px;
+  width: 40px;
+}
+
+form {
+  margin: 1rem 0;
+}
+
+button {
+  margin-top: 0.5rem;
+  display: block;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.75rem;
+  text-align: left;
+}
+
+.hidden {
+  display: none;
+}
