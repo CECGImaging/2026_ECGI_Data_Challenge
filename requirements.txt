@@ -1,0 +1,10 @@
+numpy
+scipy
+fastapi
+uvicorn
+python-multipart
+authlib
+itsdangerous
+httpx
+tzdata
+

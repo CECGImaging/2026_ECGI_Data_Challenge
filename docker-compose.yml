@@ -1,0 +1,13 @@
+# ECGI_SUBMISSIONS_HOST=/data/ecgi-submissions docker compose up -d
+services:
+  ecgi:
+    build: .
+    image: ecgi-challenge:latest
+    container_name: ecgi
+    ports:
+      - "8099:80"
+    env_file:
+      - ecgi.env
+    volumes:
+      - ./submissions:/data/submissions
+    restart: unless-stopped

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 ECGI Data Challenge — Scoring</title>
+  <!-- Bump the ?v= number whenever you change style.css/app.js to bust browser cache. -->
+  <link rel="stylesheet" href="/static/style.css?v=1" />
+</head>
+<body>
+  <div id="userbar" class="hidden">
+    <span id="user-name"></span>
+    <a href="/logout">Log out</a>
+  </div>
+  <div class="header">
+    <img src="https://avatars.githubusercontent.com/u/28630134?s=200&v=4" alt="ECGI logo" class="logo" />
+    <h1>2026 ECGI Data Challenge</h1>
+  </div>
+  <p>Upload your submission as a .zip of *-cs.mat beat files to score it against the ground-truth dataset.</p>
+
+  <form id="upload-form">
+    <input type="file" id="file-input" accept=".zip" />
+    <button type="submit" id="submit-btn" disabled>Submit</button>
+  </form>
+
+  <p id="status" class="hidden"></p>
+
+  <section id="result" class="hidden">
+    <h2>Result</h2>
+    <p>Final score: <strong id="final-score-value">—</strong></p>
+    <table id="components">
+      <thead><tr><th>Metric</th><th>Score</th><th>Weight</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p id="result-meta"></p>
+  </section>
+
+  <section id="history">
+    <h2>Your submissions</h2>
+    <p id="history-empty" class="hidden">No submissions yet.</p>
+    <table id="history-table" class="hidden">
+      <thead><tr><th>When</th><th>File</th><th>Beats</th><th>Score</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script src="/static/app.js?v=1"></script>
+</body>
+</html>
