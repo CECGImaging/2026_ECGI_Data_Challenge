@@ -19,7 +19,7 @@ import app.ScoringTools.utah_score as us
 from app import auth, storage
 from app.auth import require_user
 
-from .config import TRUE_DATA_DIR, TRUE_DATA_FILES
+from .config import TRUE_DATA_DIR
 #TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
 #TRUE_DATA_FILES="*-cs.mat"
 VERBOSE=True
@@ -123,7 +123,7 @@ async def upload_file_content(request: Request, file: UploadFile = File(...)):
   print(f"Loaded {len(data)} beat(s): {[name for name, _ in mats]}")
 
   #  Handle missing ground-truth data
-  if len(st.load(TRUE_DATA_DIR, TRUE_DATA_FILES)) == 0:
+  if len(st.load(TRUE_DATA_DIR)) == 0:
     raise HTTPException(status_code=500,
               detail=f"Server has no ground-truth data configured (looked in '{TRUE_DATA_DIR}').")
 

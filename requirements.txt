@@ -5,6 +5,6 @@ uvicorn
 python-multipart
 authlib
 itsdangerous
-httpx
+httpx2
 tzdata
 fire
