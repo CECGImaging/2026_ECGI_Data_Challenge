@@ -14,9 +14,15 @@ import zipfile
 import fnmatch
 from pathlib import Path
 
+import app.ScoringTools.scoring_tools as st
 import app.ScoringTools.utah_score as us
 from app import auth, storage
 from app.auth import require_user
+
+from .config import TRUE_DATA_DIR, TRUE_DATA_FILES
+#TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
+#TRUE_DATA_FILES="*-cs.mat"
+VERBOSE=True
 
 class Item(BaseModel):
   name: str
@@ -78,11 +84,11 @@ def extract_cs_files(zip_bytes):
   names = [n for n in archive.namelist()
            if not n.endswith("/")
            and "__MACOSX" not in n
-           and fnmatch.fnmatch(os.path.basename(n), us.TRUE_DATA_FILES)]
+           and fnmatch.fnmatch(os.path.basename(n), TRUE_DATA_FILES)]
   names.sort(key=os.path.basename)
   if not names:
     raise HTTPException(status_code=400,
-              detail=f"The zip contained no files matching '{us.TRUE_DATA_FILES}'.")
+              detail=f"The zip contained no files matching '{TRUE_DATA_FILES}'.")
   return [(n, archive.read(n)) for n in names]
 
 
@@ -117,13 +123,13 @@ async def upload_file_content(request: Request, file: UploadFile = File(...)):
   print(f"Loaded {len(data)} beat(s): {[name for name, _ in mats]}")
 
   #  Handle missing ground-truth data
-  if len(us.load_truth()) == 0:
+  if len(st.load(TRUE_DATA_DIR, TRUE_DATA_FILES)) == 0:
     raise HTTPException(status_code=500,
-              detail=f"Server has no ground-truth data configured (looked in '{us.TRUE_DATA_DIR}').")
+              detail=f"Server has no ground-truth data configured (looked in '{TRUE_DATA_DIR}').")
 
   # Score the uploaded data against the ground-truth
   try:
-    final_score,all_scores = us.run_score(data)
+    final_score,all_scores = us.run_utah_score(data)
   except us.UtahDataError as exc:
     raise HTTPException(status_code=400, detail=str(exc))
   

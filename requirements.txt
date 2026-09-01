@@ -7,4 +7,4 @@ authlib
 itsdangerous
 httpx
 tzdata
-
+fire

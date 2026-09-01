@@ -1,11 +1,6 @@
-import scoring_tools as st
+import app.ScoringTools.scoring_tools as st
 import numpy as np
 import fire
-
-from .config import TRUE_DATA_DIR, TRUE_DATA_FILES
-#TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
-#TRUE_DATA_FILES="*-cs.mat"
-VERBOSE=True
 
 class UtahDataError(Exception):
     """Raised when Utah Data Scoring fails."""
