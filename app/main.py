@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import uvicorn
 
 import scipy.io as scio
+import numpy as np
 import io
 import os
 import zipfile
@@ -19,7 +20,7 @@ import app.ScoringTools.utah_score as us
 from app import auth, storage
 from app.auth import require_user
 
-from .config import TRUE_DATA_DIR
+from app.ScoringTools.config import TRUE_DATA_DIR
 #TRUE_DATA_DIR="/uufs/sci.utah.edu/projects/comp-cardio/ECGI_Challenge/UtahDataset/Train/Beats/"
 #TRUE_DATA_FILES="*-cs.mat"
 VERBOSE=True
@@ -51,9 +52,30 @@ async def create_item(item: Item):
 
 @app.post("/files/")
 async def create_file(file: Annotated[bytes, File()]):
-  data = load_cs_file(file)
+  data = st.load_data(file)
   print(data.keys())
   return {"file_size": len(file)}
+
+def load_zip_data(zip_bytes,dataPattern=st.DATA_FILE_PATTERN):
+  """
+  TODO:Document
+  """
+  st.log("Loading zip data")
+  loaded_data = []
+  st.log(f"\tLooking with pattern {dataPattern}")
+#  archive = zipfile.ZipFile(contents)
+  names = extract_cs_files(zip_bytes, dataPattern)
+  
+#  dataFiles = [io.BytesIO(n) for _,n in names]
+  st.log(f"\tFound {len(names)} files")
+  for file,fcont in names:
+    st.log(f"\r\033[K\tLoading file: {file}", ending="")
+    raw_mat = scio.loadmat(io.BytesIO(fcont),squeeze_me=True,struct_as_record=False)
+    loaded_data.append({'potvals':np.squeeze(raw_mat['ts'].potvals),
+              'file':os.path.basename(file),
+              'pacingLoc':np.squeeze(raw_mat['ts'].pacingLoc)})
+  st.log("\n\tDone loading")
+  return loaded_data
   
 def load_cs_file(f_contents):
   """
@@ -63,14 +85,11 @@ def load_cs_file(f_contents):
   
   bytes_io_object = io.BytesIO(f_contents)
   
-  raw_mat = scio.loadmat(bytes_io_object, squeeze_me=True, struct_as_record=False)
-  data= {'potvals':raw_mat['ts'].potvals,
-              'file':raw_mat['ts'].filename,
-              'leadinfo':raw_mat['ts'].leadinfo}
-  return data
+  return st.load_data(bytes_io_object)
 
-
-def extract_cs_files(zip_bytes):
+  
+  
+def extract_cs_files(zip_bytes, dataPattern=st.DATA_FILE_PATTERN):
   """
   Pull every beat file matching the truth glob (TRUE_DATA_FILES, e.g. *-cs.mat)
   out of an uploaded zip. Returns a list of (name, bytes) sorted by basename to
@@ -84,11 +103,11 @@ def extract_cs_files(zip_bytes):
   names = [n for n in archive.namelist()
            if not n.endswith("/")
            and "__MACOSX" not in n
-           and fnmatch.fnmatch(os.path.basename(n), TRUE_DATA_FILES)]
+           and fnmatch.fnmatch(os.path.basename(n), dataPattern)]
   names.sort(key=os.path.basename)
   if not names:
     raise HTTPException(status_code=400,
-              detail=f"The zip contained no files matching '{TRUE_DATA_FILES}'.")
+              detail=f"The zip contained no files matching '{dataPattern}'.")
   return [(n, archive.read(n)) for n in names]
 
 
@@ -118,18 +137,25 @@ async def upload_file_content(request: Request, file: UploadFile = File(...)):
   user = require_user(request)
 
   contents = await file.read()  # Get zip contents as bytes
-  mats = extract_cs_files(contents)
-  data = [load_cs_file(mat_bytes) for _, mat_bytes in mats]
-  print(f"Loaded {len(data)} beat(s): {[name for name, _ in mats]}")
+#  mats = extract_cs_files(contents)
+#  data = [load_cs_file(mat_bytes) for _, mat_bytes in mats]
+# TODO: this may need some more reworking to integrate the api to the newer scripts
+#  archive = zipfile.ZipFile(io.BytesIO(contents))
+  data = load_zip_data(contents)
+#  print(f"Loaded {len(data)} beat(s): {[name for name, _ in mats]}")
+  if len(data) == 0:
+    raise HTTPException(status_code=500,
+              detail=f"submission failed.")
 
   #  Handle missing ground-truth data
-  if len(st.load(TRUE_DATA_DIR)) == 0:
+  gt_data = st.load_data(TRUE_DATA_DIR)
+  if len(gt_data) == 0:
     raise HTTPException(status_code=500,
               detail=f"Server has no ground-truth data configured (looked in '{TRUE_DATA_DIR}').")
 
   # Score the uploaded data against the ground-truth
   try:
-    final_score,all_scores = us.run_utah_score(data)
+    final_score,all_scores = us.run_utah_score(gt_data,data)
   except us.UtahDataError as exc:
     raise HTTPException(status_code=400, detail=str(exc))
   

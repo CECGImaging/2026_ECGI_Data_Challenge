@@ -2,6 +2,9 @@ import numpy as np
 import numpy.typing as npt
 import scipy.io as scio
 import glob, os
+import zipfile
+import io
+import fnmatch
 
 class ECGIDataException(Exception):
     """Raised when Utah Data Scoring fails."""
@@ -195,20 +198,21 @@ def combine_scores(all_scores):
 	return total_score
 
 
-def run_score(true_data_dir,given_data_dir,metrics={}):
+def run_score(true_data,given_data,metrics={}):
 	"""
 	TODO:Document
 	"""
 	log("=======Running Score Calculation=======")
-	log(f"Ground truth data source: {true_data_dir}")
-	log(f"Solution data source: {given_data_dir}")
+#	log(f"Ground truth data source: {true_data_dir}")
+#	log(f"Solution data source: {given_data_dir}")
 	log("Calculating the following metrics:")
 	[log(f"\t{metric}") for metric in metrics.keys()]
 	log("Begin\n")
 
 	#Load the true data
-	true_data = load_data(true_data_dir)
-	given_data = load_data(given_data_dir)
+#	true_data = load_data(true_data_dir)
+#	given_data = load_data(given_data_dir)
+
 	#ensure given and true data look correct (structurally)
 	validate_inputs(true_data,given_data)
 
