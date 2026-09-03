@@ -1,4 +1,4 @@
-import app.ScoringTools.scoring_tools as st
+import scoring_tools as st
 import numpy as np
 import fire
 
@@ -7,7 +7,7 @@ class UtahDataError(Exception):
     pass
 
 
-def run_utah_score(truth,solutions):
+def run_auckland_score(truth,solutions):
 	metrics = {	"SC":{"weight":1/6,
 					 "norm":np.mean,
 					 "run":st.calc_spatial_correlation},
@@ -32,5 +32,6 @@ if __name__=="__main__":
 	TODO:Document
 	"""
 	#Just run on the true data if called directly. Should give a perfect score
-	fire.Fire({"run":run_utah_score})
+	
+	fire.Fire({"run":run_auckland_score})
 

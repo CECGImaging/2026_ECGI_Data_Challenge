@@ -1,4 +1,4 @@
-import app.ScoringTools.scoring_tools as st
+import scoring_tools as st
 import numpy as np
 import fire
 
@@ -7,17 +7,8 @@ class UtahDataError(Exception):
     pass
 
 
-def run_utah_score(truth,solutions):
-	metrics = {	"SC":{"weight":1/6,
-					 "norm":np.mean,
-					 "run":st.calc_spatial_correlation},
-				"TC":{"weight":1/6,
-					 "norm":np.mean,
-					 "run":st.calc_temporal_correlation},
-				"RMSE":{"weight":1/6,
-					 "norm":st.normalize_RMSE,
-					 "run":st.calc_RMSE},
-				"LocErr":{"weight":1/2,
+def run_halifax_score(truth,solutions):
+	metrics = {"LocErr":{"weight":1.0,
 					 "norm":st.normalize_LocErr,
 					 "run":st.calc_LocErr}}
 	combined_score, all_scores = st.run_score(truth,solutions,metrics=metrics)
@@ -32,5 +23,6 @@ if __name__=="__main__":
 	TODO:Document
 	"""
 	#Just run on the true data if called directly. Should give a perfect score
-	fire.Fire({"run":run_utah_score})
+	
+	fire.Fire({"run":run_halifax_score})
 
