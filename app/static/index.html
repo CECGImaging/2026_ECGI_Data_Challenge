@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2026 ECGI Data Challenge — Scoring</title>
   <!-- Bump the ?v= number whenever you change style.css/app.js to bust browser cache. -->
-  <link rel="stylesheet" href="/static/style.css?v=1" />
+  <link rel="stylesheet" href="/static/style.css?v=3" />
 </head>
 <body>
   <div id="userbar" class="hidden">
@@ -16,9 +16,15 @@
     <img src="https://avatars.githubusercontent.com/u/28630134?s=200&v=4" alt="ECGI logo" class="logo" />
     <h1>2026 ECGI Data Challenge</h1>
   </div>
-  <p>Upload your submission as a .zip of *-cs.mat beat files to score it against the ground-truth dataset.</p>
+  <p>Upload your submission as a .zip of *-cs.mat beat files to score it against
+     the ground truth. Pick the dataset you built your submission from — each one
+     is scored against its own ground truth, with its own metrics.</p>
 
   <form id="upload-form">
+    <!-- One tab per challenge dataset, filled in from /datasets. -->
+    <div id="dataset-tabs" class="tabs" role="tablist" aria-label="Ground-truth dataset"></div>
+    <p id="dataset-note" class="note hidden"></p>
+
     <input type="file" id="file-input" accept=".zip" />
     <button type="submit" id="submit-btn" disabled>Submit</button>
   </form>
@@ -26,7 +32,9 @@
   <p id="status" class="hidden"></p>
 
   <section id="result" class="hidden">
-    <h2>Result</h2>
+    <!-- Names its own dataset: it persists across tab switches until the next
+         submission, so the active tab is not what identifies it. -->
+    <h2 id="result-heading">Result</h2>
     <p>Final score: <strong id="final-score-value">—</strong></p>
     <table id="components">
       <thead><tr><th>Metric</th><th>Score</th><th>Weight</th></tr></thead>
@@ -38,12 +46,13 @@
   <section id="history">
     <h2>Your submissions</h2>
     <p id="history-empty" class="hidden">No submissions yet.</p>
+    <p id="history-hint" class="note hidden">Hover, tap, or tab to a score to see its metric breakdown.</p>
     <table id="history-table" class="hidden">
-      <thead><tr><th>When</th><th>File</th><th>Beats</th><th>Score</th></tr></thead>
+      <thead><tr><th>When</th><th>Dataset</th><th>File</th><th>Beats</th><th>Score</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
 
-  <script src="/static/app.js?v=1"></script>
+  <script src="/static/app.js?v=3"></script>
 </body>
 </html>

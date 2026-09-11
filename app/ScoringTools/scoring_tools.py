@@ -35,7 +35,7 @@ def calculate_correlation(signal1: npt.NDArray[np.floating],
 
 	#Ensure both are 1D signals.
 	if len(signal1.shape)>1 or len(signal2.shape)>1:
-		raise UtahDataError('Correlation calculation requires both signals to be 1D')
+		raise ECGIDataException('Correlation calculation requires both signals to be 1D')
 	#pad a signal that is shorter if needed
 	if signal1.shape[0] != signal2.shape[0]:
 		len_1 = signal1.shape[0]
@@ -150,15 +150,26 @@ def validate_inputs(true_data,given_data):
 							       f"\tGiven data incorrect pacing/pvc site shape signal: {signalIndex} file : {thisSignal['file']} shape : {thisSignal['pacingLoc'].shape }")
 
 
+def find_data_files(dataDir,dataPattern=DATA_FILE_PATTERN):
+	"""
+	Every beat file under dataDir matching dataPattern, sorted by basename so
+	the list lines up beat-for-beat with a submission's files.
+	"""
+	# ** searches sub-directories as well as dataDir itself, so a dataset that
+	# files its beats under per-session folders loads the same as a flat one.
+	fullFilePattern = os.path.join(dataDir, "**", dataPattern)
+	log(f"\tLooking with pattern {fullFilePattern}")
+	return sorted((os.path.abspath(name)
+				   for name in glob.glob(fullFilePattern, recursive=True)),
+				  key=os.path.basename)
+
 def load_data(dataDir,dataPattern=DATA_FILE_PATTERN):
 	"""
 	TODO:Document
 	"""
 	log("Loading data")
 	loaded_data = []
-	fullFilePattern = f"{dataDir}{dataPattern}"
-	log(f"\tLooking with pattern {fullFilePattern}")
-	dataFiles = [os.path.abspath(name) for name in glob.glob(fullFilePattern)]
+	dataFiles = find_data_files(dataDir,dataPattern)
 	log(f"\tFound {len(dataFiles)} files")
 	for file in dataFiles:
 		log(f"\r\033[K\tLoading file: {file}", ending="")
@@ -230,7 +241,11 @@ def run_score(true_data,given_data,metrics={}):
 	#For each signal, calculate the scores
 	for sigIndex,(true_signal,given_signal) in enumerate(zip(true_data,given_data)):
 		log(f"Working on signal {sigIndex+1} of {number_of_beats}")
-		assert true_signal['file'] == given_signal['file'] , f"File names do not match True: {true_signal['file']} given: {given_signal['file']}"
+		if true_signal['file'] != given_signal['file']:
+			raise ECGIDataException("Validation Check:\n"
+								   f"\tFile names do not match at beat {sigIndex+1}."
+								   f"\n\tExpected: {true_signal['file']}"
+								   f"\n\tGot     : {given_signal['file']}")
 		for metricName in metrics.keys():
 			all_scores[metricName]['value'][sigIndex] = metrics[metricName]["run"](true_signal,given_signal)
 

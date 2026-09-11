@@ -69,7 +69,11 @@ def list_submissions(user: dict) -> list:
             "timestamp": rec.get("timestamp"),
             "created_at": rec.get("created_at"),
             "filename": rec.get("filename"),
+            "dataset": rec.get("dataset"),
+            "dataset_label": rec.get("dataset_label"),
             "final_score": rec.get("final_score"),
             "num_beats": rec.get("num_beats"),
+            # per-metric breakdown, shown on hover in the history table
+            "components": rec.get("components"),
         })
     return out

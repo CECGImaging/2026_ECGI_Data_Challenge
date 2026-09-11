@@ -37,6 +37,49 @@ button {
   display: block;
 }
 
+/* One tab per ground-truth dataset, above the file picker. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 0.75rem;
+}
+
+.tab {
+  display: inline-block;
+  margin: 0 0 -1px 0;
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  color: #333;
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  border-bottom-color: transparent;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+}
+
+.tab:hover:not(:disabled):not(.active) {
+  background: #e8e8e8;
+}
+
+.tab.active {
+  background: #fff;
+  font-weight: 600;
+  border-bottom-color: #fff;
+}
+
+.tab:disabled {
+  color: #999;
+  background: #fafafa;
+  cursor: not-allowed;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: #555;
+}
+
 table {
   border-collapse: collapse;
   margin-top: 0.5rem;
@@ -50,4 +93,72 @@ th, td {
 
 .hidden {
   display: none;
+}
+
+/* Score cells in the history table carry their metric breakdown in a card that
+   opens on hover, on keyboard focus, and on tap. */
+.score-cell {
+  position: relative;
+  cursor: help;
+}
+
+.score-value {
+  border-bottom: 1px dotted #888;
+}
+
+.detail-card {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;          /* score is the last column, so open leftwards */
+  z-index: 10;
+  margin-top: 2px;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  font-size: 0.8rem;
+  font-weight: normal;
+  white-space: nowrap;
+  text-align: left;
+  cursor: auto;
+}
+
+.score-cell:hover .detail-card,
+.score-cell:focus .detail-card,
+.score-cell:focus-within .detail-card {
+  display: block;
+}
+
+/* The card's own table opts out of the bordered table styling above. */
+.detail-card table {
+  margin: 0;
+}
+
+.detail-card th,
+.detail-card td {
+  border: none;
+  padding: 0.1rem 0 0.1rem 0.75rem;
+}
+
+.detail-card th:first-child,
+.detail-card td:first-child {
+  padding-left: 0;
+}
+
+.detail-card th {
+  border-bottom: 1px solid #ddd;
+  color: #555;
+  font-weight: 600;
+}
+
+.detail-card td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Room for the last row's card to open without running off the page. */
+#history {
+  margin-bottom: 9rem;
 }
