@@ -25,7 +25,7 @@ For more information about the challenge, please refer to the challenge webpag: 
   2. *Dockerfile* - Modify this file to match your app and storage structure.  Specifically, you will probably only need to change the following line:
      - `COPY GT_Data_test /data/GT_Data_test` needs to match the code and your storage location.  
        - The first path is the directory where the ground truth data are located, relative to the root dir of the repo.  
-       - The second is the location in the container, which will need to match the path in [app configure file](https://github.com/CECGImaging/2026_ECGI_Data_Challenge/blob/updating_scoring_tools/app/ScoringTools/config.py).  You shouldn't need to change this path.
+       - The second is the location in the container, which will need to match the path in [app configure file](https://github.com/CECGImaging/2026_ECGI_Data_Challenge/blob/main/app/ScoringTools/config.py).  You shouldn't need to change this path.
   3. *docker-compose.yml* - Should not need to be changed if following the previous instructions.  However, make sure the following values match changes in previous steps:
     - `env_file:` needs to match the env file name in step 1. 
     - `volumes:` needs to match the `ECGI_SUBMISSIONS_DIR` value in step 1. 
