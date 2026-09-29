@@ -224,6 +224,20 @@ async def submissions(request: Request):
   user = require_user(request)
   return storage.list_submissions(user)
 
+@app.get("/leaderboard")
+async def leaderboard(request: Request, dataset: str = ""):
+  """Every participant's best score on one dataset, for the leaderboard tabs.
+  Datasets are ranked separately: each has its own metrics, so their scores
+  are not comparable"""
+  viewer = require_user(request)
+  dataset = (dataset or "").strip().lower()
+  if not config.is_known(dataset):
+    raise HTTPException(status_code=400, detail=f"Unknown dataset '{dataset}'.")
+  # Submissions made with auth disabled belong to the dev stand-in user. They
+  # are test runs, so keep them off the board once real logins are on
+  hide = (auth.DEV_USER["sub"],) if auth.AUTH_ENABLED else ()
+  return storage.leaderboard(dataset, viewer, hide_subs=hide)
+
 
 
 #if __name__ == "__main__":

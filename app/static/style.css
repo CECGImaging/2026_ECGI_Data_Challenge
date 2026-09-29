@@ -159,6 +159,22 @@ th, td {
 }
 
 /* Room for the last row's card to open without running off the page. */
-#history {
+#leaderboard {
   margin-bottom: 9rem;
+}
+
+/* "Sort by" control above the history table. */
+#history-sort-box {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+}
+
+#history-sort-box.hidden {
+  display: none;
+}
+
+/* The viewer's own row on the leaderboard. */
+#leaderboard-table > tbody > tr.is-you {
+  background: #fff8dc;
+  font-weight: 600;
 }

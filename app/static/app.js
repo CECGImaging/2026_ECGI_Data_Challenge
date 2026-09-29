@@ -46,6 +46,16 @@ function metricRows(components) {
   }));
 }
 
+// Render a submission time in Mountain time with the zone label.
+function formatWhen(createdAt, fallback = "") {
+  if (!createdAt) return fallback || "";
+  return new Date(createdAt).toLocaleString("en-US", {
+    timeZone: "America/Denver", timeZoneName: "short",
+    year: "numeric", month: "short", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+}
+
 // Show who is logged in (the page is only reachable when authenticated).
 (async function showUser() {
   try {
@@ -96,6 +106,7 @@ async function loadDatasets() {
     }
     tabsBox.appendChild(tab);
   }
+  buildLeaderboardTabs(items);
 
   const firstAvailable = items.find((it) => it.available);
   if (firstAvailable) {
@@ -124,57 +135,140 @@ function selectDataset(key) {
 }
 loadDatasets();
 
-// Load and render the logged-in user's submission history (newest first).
+// The last-fetched history, kept so re-sorting doesn't hit the server again.
+let historyItems = [];
+const historySort = document.getElementById("history-sort");
+historySort.addEventListener("change", renderHistory);
+
+// Newest first by default, or best score first. The "timestamp" folder name
+// (YYYY-MM-DDTHH-MM-SS-ffffff) sorts correctly as plain text. Unscored rows go
+// last, and equal scores fall back to newest first.
+function sortedHistory() {
+  const byNewest = (a, b) => (b.timestamp || "").localeCompare(a.timestamp || "");
+  const items = [...historyItems];
+  if (historySort.value !== "score") return items.sort(byNewest);
+  const num = (it) => (typeof it.final_score === "number" ? it.final_score : -Infinity);
+  return items.sort((a, b) => (num(b) - num(a)) || byNewest(a, b));
+}
+
+// Load the logged-in user's submission history, then render it.
 async function loadHistory() {
   try {
     const resp = await fetch("/submissions");
     if (!resp.ok) return;
-    const items = await resp.json();
-
-    const tbody = document.querySelector("#history-table tbody");
-    const table = document.getElementById("history-table");
-    const empty = document.getElementById("history-empty");
-    const hint = document.getElementById("history-hint");
-    tbody.innerHTML = "";
-
-    if (!items.length) {
-      table.classList.add("hidden");
-      if (hint) hint.classList.add("hidden");
-      empty.classList.remove("hidden");
-      return;
-    }
-    empty.classList.add("hidden");
-
-    let anyDetail = false;
-    for (const it of items) {
-      // render in Mountain time with the zone label
-      const when = it.created_at
-        ? new Date(it.created_at).toLocaleString("en-US", {
-            timeZone: "America/Denver", timeZoneName: "short",
-            year: "numeric", month: "short", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit",
-          })
-        : (it.timestamp || "");
-      const score = (typeof it.final_score === "number") ? it.final_score.toFixed(4) : "—";
-      // submissions scored before datasets were selectable have no dataset
-      const dataset = it.dataset_label || datasetLabels[it.dataset] || it.dataset || "—";
-
-      const row = document.createElement("tr");
-      // textContent (not innerHTML) so a crafted filename can't inject markup
-      [when, dataset, it.filename || "", it.num_beats ?? ""].forEach((val) => {
-        const td = document.createElement("td");
-        td.textContent = val;
-        row.appendChild(td);
-      });
-      row.appendChild(scoreCell(score, it.components));
-      if (metricRows(it.components).length) anyDetail = true;
-      tbody.appendChild(row);
-    }
-    table.classList.remove("hidden");
-    if (hint) hint.classList.toggle("hidden", !anyDetail);
+    historyItems = await resp.json();
+    renderHistory();
   } catch (_) { /* ignore */ }
 }
+
+function renderHistory() {
+  const tbody = document.querySelector("#history-table tbody");
+  const table = document.getElementById("history-table");
+  const empty = document.getElementById("history-empty");
+  const hint = document.getElementById("history-hint");
+  const sortBox = document.getElementById("history-sort-box");
+  tbody.innerHTML = "";
+
+  if (!historyItems.length) {
+    table.classList.add("hidden");
+    if (hint) hint.classList.add("hidden");
+    sortBox.classList.add("hidden");
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+  sortBox.classList.remove("hidden");
+
+  let anyDetail = false;
+  for (const it of sortedHistory()) {
+    const when = formatWhen(it.created_at, it.timestamp);
+    const score = (typeof it.final_score === "number") ? it.final_score.toFixed(4) : "—";
+    // submissions scored before datasets were selectable have no dataset
+    const dataset = it.dataset_label || datasetLabels[it.dataset] || it.dataset || "—";
+
+    const row = document.createElement("tr");
+    // textContent (not innerHTML) so a crafted filename can't inject markup
+    [when, dataset, it.filename || "", it.num_beats ?? ""].forEach((val) => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      row.appendChild(td);
+    });
+    row.appendChild(scoreCell(score, it.components));
+    if (metricRows(it.components).length) anyDetail = true;
+    tbody.appendChild(row);
+  }
+  table.classList.remove("hidden");
+  if (hint) hint.classList.toggle("hidden", !anyDetail);
+}
 loadHistory();
+
+// Leaderboard: one tab per dataset, since each is scored with its own metrics
+// and their scores can't be compared. Picking a tab here doesn't touch the
+// upload tabs.
+const leaderboardTabs = document.getElementById("leaderboard-tabs");
+let leaderboardDataset = null;
+
+function buildLeaderboardTabs(items) {
+  leaderboardTabs.innerHTML = "";
+  for (const item of items) {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "tab";
+    tab.textContent = item.label;
+    tab.dataset.key = item.key;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", "false");
+    tab.addEventListener("click", () => loadLeaderboard(item.key));
+    leaderboardTabs.appendChild(tab);
+  }
+  if (items.length) loadLeaderboard(items[0].key);
+}
+
+async function loadLeaderboard(key) {
+  leaderboardDataset = key;
+  for (const tab of leaderboardTabs.querySelectorAll(".tab")) {
+    const active = tab.dataset.key === key;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+  }
+
+  const table = document.getElementById("leaderboard-table");
+  const tbody = table.querySelector("tbody");
+  const empty = document.getElementById("leaderboard-empty");
+  let rows = null;   // stays null if the fetch fails
+  try {
+    const resp = await fetch(`/leaderboard?dataset=${encodeURIComponent(key)}`);
+    if (resp.ok) rows = await resp.json();
+  } catch (_) { /* handled below */ }
+  if (key !== leaderboardDataset) return;   // another tab was picked meanwhile
+
+  // Always clear, so a failed load never leaves the previous dataset's rows
+  // sitting under this dataset's tab.
+  tbody.innerHTML = "";
+  if (rows === null) {
+    table.classList.add("hidden");
+    empty.textContent = "Could not load the leaderboard. Try reloading the page.";
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.textContent = "No submissions for this dataset yet.";
+  table.classList.toggle("hidden", !rows.length);
+  empty.classList.toggle("hidden", rows.length > 0);
+
+  for (const r of rows) {
+    const row = document.createElement("tr");
+    if (r.is_you) row.className = "is-you";
+    const name = r.participant + (r.is_you ? " (you)" : "");
+    // textContent, since participant names come from other users' profiles
+    [r.rank, name, r.submissions, formatWhen(r.created_at)].forEach((val) => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      row.appendChild(td);
+    });
+    row.appendChild(scoreCell(r.final_score.toFixed(4), r.components));
+    tbody.appendChild(row);
+  }
+}
 
 // The score cell, carrying the metric breakdown as a card that opens on hover,
 // on keyboard focus, and on tap. The card holds a table of its own, so anything
@@ -290,6 +384,7 @@ form.addEventListener("submit", async (e) => {
     renderResult(data);
     setStatus("");
     loadHistory();  // refresh history with the new submission
+    if (leaderboardDataset) loadLeaderboard(leaderboardDataset);  // it may have moved up
   } catch (err) {
     setStatus(`Network error: ${err.message}`);
   } finally {
