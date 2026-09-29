@@ -9,26 +9,25 @@ For more information about the challenge, please refer to the challenge webpag: 
 
 ### Requirements
 
- - Docker (e.g., [Docker desktop](https://www.docker.com/products/docker-desktop/))
- - Python (tested with Python 3.10)
- - Python libraries in [requirements.txt](https://github.com/CECGImaging/2026_ECGI_Data_Challenge/blob/main/requirements.txt)
+  - Docker (e.g., [Docker desktop](https://www.docker.com/products/docker-desktop/))
+  - Python (tested with Python 3.10)
+  - Python libraries in [requirements.txt](https://github.com/CECGImaging/2026_ECGI_Data_Challenge/blob/main/requirements.txt)
  
  ### Configure Docker build
  
- The Docker container and Web app need to be configure to build and run properly in a local environment.  The primary configuration is in the `.env` file, but the `Dockerfile` and `docker-compose.yml` may also need to be modified to match the environment. 
+ The Docker container and Web app need to be configure to build and run properly in a local environment.  The primary configuration is in the `.env` file, but the `docker-compose.yml` may also need to be modified to match the environment. 
  
-  1. *env file* - Copy the `example.ecgi.env` and give it a relavent name, such as `ecgi.env`. Change or add the the following values to the env file:  
-     - `AUTH_ENABLED=false`
-     - `APP_BASE_URL=http://localhost:8100`
-     - `SESSION_SECRET=[anything else.  Do not share]` (optional but recommended)
-     - `ECGI_SUBMISSIONS_DIR=/data/submissions` (optional, and location can be where ever needed)
-  2. *Dockerfile* - Modify this file to match your app and storage structure.  Specifically, you will probably only need to change the following line:
-     - `COPY GT_Data_test /data/GT_Data_test` needs to match the code and your storage location.  
-       - The first path is the directory where the ground truth data are located, relative to the root dir of the repo.  
-       - The second is the location in the container, which will need to match the path in [app configure file](https://github.com/CECGImaging/2026_ECGI_Data_Challenge/blob/main/app/ScoringTools/config.py).  You shouldn't need to change this path.
-  3. *docker-compose.yml* - Should not need to be changed if following the previous instructions.  However, make sure the following values match changes in previous steps:
+  1. *env file* - Copy the `example.env` and give it a relavent name, such as `.env`. Change or add the the following values to the env file:  
+    - `AUTH_ENABLED=false`
+    - `APP_BASE_URL=http://localhost:8100`
+    - `SESSION_SECRET=[anything else.  Do not share]` (optional but recommended)
+    - `ECGI_GT_UTAH_HOST=[/Path/to/Utah/GroundTruth/data]`
+    - `ECGI_GT_AUCKLAND_HOST=[/Path/to/Auckland/GroundTruth/data]`
+    - `ECGI_GT_HALIFAX_HOST=[/Path/to/Halifax/GroundTruth/data]`
+    - `ECGI_GT_BRATISLAVA_HOST=[/Path/to/Bratislava/GroundTruth/data]`
+  2. *docker-compose.yml* - Should not need to be changed if following the previous instructions.  However, make sure the following values match changes in previous steps:
     - `env_file:` needs to match the env file name in step 1. 
-    - `volumes:` needs to match the `ECGI_SUBMISSIONS_DIR` value in step 1. 
+    
  
  ### Build Docker container
  
