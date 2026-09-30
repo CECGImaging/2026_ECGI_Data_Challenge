@@ -1,2 +1,9 @@
 venv
-ecgi.env
+.env
+.git
+__pycache__
+*.pyc
+# Ground truth and submissions are mounted at run time, never built into the image
+GT_Data_test
+ground-truth
+submissions
