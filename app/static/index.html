@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2026 ECGI Data Challenge — Scoring</title>
   <!-- Bump the ?v= number whenever you change style.css/app.js to bust browser cache. -->
-  <link rel="stylesheet" href="/static/style.css?v=6" />
+  <link rel="stylesheet" href="/static/style.css?v=11" />
 </head>
 <body>
   <div id="userbar" class="hidden">
@@ -17,8 +17,8 @@
     <h1>2026 ECGI Data Challenge</h1>
   </div>
   <p>Upload your submission as a .zip of *-cs.mat beat files to score it against
-     the ground truth. Pick the dataset you built your submission from — each one
-     is scored against its own ground truth, with its own metrics.</p>
+     the ground truth. Pick the dataset you built your submission from. Each
+     one is scored against its own ground truth, with its own metrics.</p>
 
   <form id="upload-form">
     <!-- One tab per challenge dataset, filled in from /datasets. -->
@@ -49,19 +49,33 @@
     <p id="history-hint" class="note hidden">Hover, tap, or tab to a score to see its metric breakdown.</p>
     <label id="history-sort-box" class="note hidden">Sort by
       <select id="history-sort">
-        <option value="when">When (newest first)</option>
-        <option value="score">Score (high to low)</option>
+        <option value="newest">Time (newest first)</option>
+        <option value="oldest">Time (oldest first)</option>
+        <option value="score">Score (best first: low to high)</option>
       </select>
     </label>
     <table id="history-table" class="hidden">
-      <thead><tr><th>When</th><th>Dataset</th><th>File</th><th>Beats</th><th>Score</th></tr></thead>
+      <thead><tr><th>Time</th><th>Dataset</th><th>File</th><th>Beats</th><th>Score</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="overall">
+    <h2>Overall leaderboard</h2>
+    <p class="note">Scores are localization errors: lower is better.
+       Ranked by the average of each participant's best score on the
+       four datasets. Only participants with a score on all four are listed.</p>
+    <p id="overall-empty" class="hidden">No one has a score on every dataset yet.</p>
+    <table id="overall-table" class="hidden">
+      <thead><tr><th>Rank</th><th>Participant</th><th>Submissions</th><th>Last best submitted</th><th>Average</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
 
   <section id="leaderboard">
     <h2>Leaderboard</h2>
-    <p class="note">Each participant's best score, ranked separately for each dataset.</p>
+    <p class="note">Each participant's best (lowest) score, ranked separately for
+       each dataset. Scores are localization errors: lower is better.</p>
     <!-- Independent of the upload tabs: browsing a board doesn't change what you submit against. -->
     <div id="leaderboard-tabs" class="tabs" role="tablist" aria-label="Leaderboard dataset"></div>
     <p id="leaderboard-empty" class="hidden">No submissions for this dataset yet.</p>
@@ -71,6 +85,6 @@
     </table>
   </section>
 
-  <script src="/static/app.js?v=6"></script>
+  <script src="/static/app.js?v=11"></script>
 </body>
 </html>

@@ -178,3 +178,9 @@ th, td {
   background: #fff8dc;
   font-weight: 600;
 }
+
+/* The viewer's own row on the overall leaderboard. */
+#overall-table > tbody > tr.is-you {
+  background: #fff8dc;
+  font-weight: 600;
+}

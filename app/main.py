@@ -238,6 +238,17 @@ async def leaderboard(request: Request, dataset: str = ""):
   hide = (auth.DEV_USER["sub"],) if auth.AUTH_ENABLED else ()
   return storage.leaderboard(dataset, viewer, hide_subs=hide)
 
+@app.get("/leaderboard/overall")
+async def overall_leaderboard(request: Request):
+  """Participants ranked by the average of their best score on each dataset.
+  Only those with a score on every challenge dataset are listed"""
+  viewer = require_user(request)
+  datasets = {key: config.label(key) for key in config.DATASETS}
+  # Same as /leaderboard: keep the dev stand-in user's test runs off the board
+  # once real logins are on
+  hide = (auth.DEV_USER["sub"],) if auth.AUTH_ENABLED else ()
+  return storage.overall_leaderboard(datasets, viewer, hide_subs=hide)
+
 
 
 #if __name__ == "__main__":

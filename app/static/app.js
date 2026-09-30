@@ -140,15 +140,17 @@ let historyItems = [];
 const historySort = document.getElementById("history-sort");
 historySort.addEventListener("change", renderHistory);
 
-// Newest first by default, or best score first. The "timestamp" folder name
-// (YYYY-MM-DDTHH-MM-SS-ffffff) sorts correctly as plain text. Unscored rows go
-// last, and equal scores fall back to newest first.
+// Newest first by default, oldest first, or best score first. The "timestamp"
+// folder name (YYYY-MM-DDTHH-MM-SS-ffffff) sorts correctly as plain text.
+// Scores are localization errors, so best = LOWEST. Unscored rows go last,
+// and equal scores fall back to newest first.
 function sortedHistory() {
   const byNewest = (a, b) => (b.timestamp || "").localeCompare(a.timestamp || "");
   const items = [...historyItems];
+  if (historySort.value === "oldest") return items.sort((a, b) => byNewest(b, a));
   if (historySort.value !== "score") return items.sort(byNewest);
-  const num = (it) => (typeof it.final_score === "number" ? it.final_score : -Infinity);
-  return items.sort((a, b) => (num(b) - num(a)) || byNewest(a, b));
+  const num = (it) => (typeof it.final_score === "number" ? it.final_score : Infinity);
+  return items.sort((a, b) => (num(a) - num(b)) || byNewest(a, b));
 }
 
 // Load the logged-in user's submission history, then render it.
@@ -270,6 +272,52 @@ async function loadLeaderboard(key) {
   }
 }
 
+// Overall leaderboard: the average of each participant's per-dataset bests,
+// listing only those with a score on every dataset. A board of its own, in its
+// own section; rows come back in the same shape as the per-dataset boards.
+async function loadOverallBoard() {
+  const table = document.getElementById("overall-table");
+  const tbody = table.querySelector("tbody");
+  const empty = document.getElementById("overall-empty");
+  let rows = null;   // stays null if the fetch fails
+  try {
+    const resp = await fetch("/leaderboard/overall");
+    if (resp.ok) rows = await resp.json();
+  } catch (_) { /* handled below */ }
+
+  // Always clear, so a failed reload never leaves stale rows behind.
+  tbody.innerHTML = "";
+  if (rows === null) {
+    table.classList.add("hidden");
+    empty.textContent = "Could not load the leaderboard. Try reloading the page.";
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.textContent = "No one has a score on every dataset yet.";
+  table.classList.toggle("hidden", !rows.length);
+  empty.classList.toggle("hidden", rows.length > 0);
+
+  for (const r of rows) {
+    const row = document.createElement("tr");
+    if (r.is_you) row.className = "is-you";
+    const name = r.participant + (r.is_you ? " (you)" : "");
+    // textContent, since participant names come from other users' profiles
+    [r.rank, name, r.submissions, formatWhen(r.created_at)].forEach((val) => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      row.appendChild(td);
+    });
+    // The hover card lists the dataset bests that were averaged, so its first
+    // column holds datasets rather than metrics.
+    const cell = scoreCell(r.final_score.toFixed(4), r.components);
+    const heading = cell.querySelector(".detail-card th");
+    if (heading) heading.textContent = "Dataset";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+  }
+}
+loadOverallBoard();
+
 // The score cell, carrying the metric breakdown as a card that opens on hover,
 // on keyboard focus, and on tap. The card holds a table of its own, so anything
 // selecting history rows wants "#history-table > tbody > tr", not a descendant
@@ -385,6 +433,7 @@ form.addEventListener("submit", async (e) => {
     setStatus("");
     loadHistory();  // refresh history with the new submission
     if (leaderboardDataset) loadLeaderboard(leaderboardDataset);  // it may have moved up
+    loadOverallBoard();
   } catch (err) {
     setStatus(`Network error: ${err.message}`);
   } finally {

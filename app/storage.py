@@ -95,7 +95,8 @@ def _public_name(user: dict) -> str:
 
 def leaderboard(dataset: str, viewer: dict, hide_subs=()) -> list:
     """One row per participant: their best score on this dataset, best first.
-    Equal scores go to whoever got there first. Submissions by users whose
+    Scores are mean localization errors, lower is better. Equal scores go
+    to whoever got there first. Submissions by users whose
     "sub" is in hide_subs are left out. Carries no user identifiers, only a
     display name and whether the row is the viewer's own
 
@@ -135,24 +136,24 @@ def leaderboard(dataset: str, viewer: dict, hide_subs=()) -> list:
 
             count += 1
 
-            # Keep this record if it beats the current best. On an equal score keep
+            # Keep this record if it beats the current best, i.e. has a LOWER score
+            # (a smaller localization error). On an equal score keep
             # the EARLIER one: the timestamp (YYYY-MM-DDTHH-MM-SS-ffffff) compares
             # correctly as plain text, so a smaller string means an earlier submission
             score, ts = rec["final_score"], rec.get("timestamp", "")
             if (top is None
-                    or score > top["final_score"]
+                    or score < top["final_score"]
                     or (score == top["final_score"] and ts < top.get("timestamp", ""))):
                 top = rec
 
         if top is not None:   # users with nothing scored on this dataset aren't listed
             best[user_dir.name] = (top, count)
 
-    # Step 2: order participants by their best score, highest first. Negating the
-    # score makes Python's ascending sort go high -> low. On a tie, the earlier
-    # timestamp sorts first, so whoever reached that score first ranks higher
+    # Step 2: order participants by their best score, lowest first.
+    # On a tie, the earlier timestamp sorts first
     def rank_order(item):
         _user, (rec, _count) = item
-        return (-rec["final_score"], rec.get("timestamp", ""))
+        return (rec["final_score"], rec.get("timestamp", ""))
 
     ranked = sorted(best.items(), key=rank_order)
 
@@ -172,3 +173,80 @@ def leaderboard(dataset: str, viewer: dict, hide_subs=()) -> list:
             "created_at": rec.get("created_at"),    # when the best one was submitted
         })
     return rows
+
+
+
+# Overall leaderboard: average of each participant's per-dataset bests
+# ---
+def overall_leaderboard(datasets: dict, viewer: dict, hide_subs=()) -> list:
+    """One row per participant who has a score on EVERY dataset in `datasets`
+    ({key: label}), ranked by the plain average of their best score on each,
+    lowest first (scores are localization errors, so lower is better). Anyone
+    missing a dataset is left off the board entirely.
+    Carries no user identifiers, same as leaderboard()"""
+    if not SUBMISSIONS_DIR.is_dir():
+        return []
+
+    viewer_key = _user_key(viewer)
+    share = 1 / len(datasets)   # each dataset's weight in the average
+
+    entries = []
+    for user_dir in SUBMISSIONS_DIR.iterdir():   # one folder per user
+        if not user_dir.is_dir():
+            continue
+
+        # Step 1: this participant's best record on each dataset, picked by the
+        # same rule as leaderboard(): lowest score, earlier submission on a tie
+        bests, count = {}, 0   # dataset key -> best record; results on these datasets
+        for record_path in user_dir.glob("*/result.json"):
+            try:
+                rec = json.loads(record_path.read_text())
+            except (ValueError, OSError):
+                continue
+            dataset = rec.get("dataset")
+            if dataset not in datasets or not isinstance(rec.get("final_score"), (int, float)):
+                continue
+            if (rec.get("user") or {}).get("sub") in hide_subs:
+                continue
+
+            count += 1
+            score, ts = rec["final_score"], rec.get("timestamp", "")
+            top = bests.get(dataset)
+            if (top is None
+                    or score < top["final_score"]
+                    or (score == top["final_score"] and ts < top.get("timestamp", ""))):
+                bests[dataset] = rec
+
+        # Step 2: only participants with a score on every dataset qualify
+        if len(bests) < len(datasets):
+            continue
+
+        # The average only reached its current value once the LAST of these bests
+        # came in, so that is when this participant "got there". Used for ties
+        latest = max(bests.values(), key=lambda rec: rec.get("timestamp", ""))
+        entries.append({
+            "user": user_dir.name,
+            "average": sum(rec["final_score"] for rec in bests.values()) / len(datasets),
+            "reached": latest.get("timestamp", ""),
+            "participant": _public_name(latest.get("user") or {}),   # newest profile name
+            # Shaped like a submission's metric breakdown, so the browser can reuse
+            # the same hover card: each dataset is one "metric" of the average
+            "components": {label: {"score": bests[key]["final_score"], "weight": share}
+                           for key, label in datasets.items()},
+            "submissions": count,
+            "created_at": latest.get("created_at"),
+        })
+
+    # Step 3: lowest average first; on a tie, whoever reached it first
+    entries.sort(key=lambda e: (e["average"], e["reached"]))
+
+    # Step 4: rows for the browser, ranked by position like leaderboard()
+    return [{
+        "rank": position,
+        "participant": e["participant"],
+        "is_you": e["user"] == viewer_key,
+        "final_score": e["average"],
+        "components": e["components"],
+        "submissions": e["submissions"],   # all their results across these datasets
+        "created_at": e["created_at"],     # when the last of their bests was submitted
+    } for position, e in enumerate(entries, start=1)]
