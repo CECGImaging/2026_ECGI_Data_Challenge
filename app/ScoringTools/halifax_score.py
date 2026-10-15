@@ -1,4 +1,4 @@
-import scoring_tools as st
+import app.ScoringTools.scoring_tools as st
 import numpy as np
 import fire
 

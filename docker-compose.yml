@@ -1,4 +1,11 @@
-# ECGI_SUBMISSIONS_HOST=/data/ecgi-submissions docker compose up -d
+# Ground-truth locations are never written into this file. The host directory
+# for each dataset comes from a local, git-ignored .env sitting next to this
+# file. Copy example.env to .env and fill it in before the first
+# `docker compose up -d`.
+#
+# Compose reads .env for the ${...} substitutions below, and passes the same
+# file into the container as env_file so the app sees the auth and infra
+# settings. Container-side data paths are fixed here, not configured.
 services:
   ecgi:
     build: .
@@ -7,7 +14,13 @@ services:
     ports:
       - "8099:80"
     env_file:
-      - ecgi.env
+      - .env
     volumes:
-      - ./submissions:/data/submissions
+      - ${ECGI_SUBMISSIONS_HOST:-./submissions}:/data/submissions
+      # Ground truth is read-only to the app. Comment out any dataset this
+      # deployment does not host -- the UI shows it as unavailable.
+      - ${ECGI_GT_UTAH_HOST:?set ECGI_GT_UTAH_HOST in .env}:/data/ground-truth/utah:ro
+      - ${ECGI_GT_AUCKLAND_HOST:?set ECGI_GT_AUCKLAND_HOST in .env}:/data/ground-truth/auckland:ro
+      - ${ECGI_GT_HALIFAX_HOST:?set ECGI_GT_HALIFAX_HOST in .env}:/data/ground-truth/halifax:ro
+      - ${ECGI_GT_BRATISLAVA_HOST:?set ECGI_GT_BRATISLAVA_HOST in .env}:/data/ground-truth/bratislava:ro
     restart: unless-stopped

@@ -8,16 +8,16 @@ class UtahDataError(Exception):
 
 
 def run_utah_score(truth,solutions):
-	metrics = {	"SC":{"weight":1/6,
+	metrics = {	"SC":{"weight": 0.0,
 					 "norm":np.mean,
 					 "run":st.calc_spatial_correlation},
-				"TC":{"weight":1/6,
+				"TC":{"weight": 0.0,
 					 "norm":np.mean,
 					 "run":st.calc_temporal_correlation},
-				"RMSE":{"weight":1/6,
+				"RMSE":{"weight":0.0,
 					 "norm":st.normalize_RMSE,
 					 "run":st.calc_RMSE},
-				"LocErr":{"weight":1/2,
+				"LocErr":{"weight":1.0,
 					 "norm":st.normalize_LocErr,
 					 "run":st.calc_LocErr}}
 	combined_score, all_scores = st.run_score(truth,solutions,metrics=metrics)

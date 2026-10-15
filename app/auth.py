@@ -18,6 +18,10 @@ APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8099").rstrip("/
 SESSION_SECRET = os.environ.get( "SESSION_SECRET" ) or secrets.token_urlsafe( 32 )
 AUTH_ENABLED = os.environ.get( "AUTH_ENABLED", "false" ).lower() not in ( "false", "0", "no" )
 
+# Stand-in user for local dev with auth disabled. Its "sub" can't collide with
+# a real account: Keycloak subs are UUIDs
+DEV_USER = {"sub": "dev", "username": "dev", "email": "dev@local", "name": "Dev User"}
+
 # OIDC discovery document for the realm
 OIDC_METADATA_URL = f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/.well-known/openid-configuration"
 
@@ -38,7 +42,7 @@ def current_user(request: Request):
     """Return the logged-in user dict, or None. When auth is disabled (local
     dev only) a stand-in user is returned so the rest of the app works."""
     if not AUTH_ENABLED:
-        return {"sub": "dev", "username": "dev", "email": "dev@local", "name": "Dev User"}
+        return dict(DEV_USER)
     return request.session.get("user")
 
 def require_user(request: Request):
